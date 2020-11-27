@@ -180,7 +180,7 @@ public:
       name                   account_name;
       string                 wast;
       string                 wasm;
-      fc::sha256             code_hash;
+      chain::hash256         code_hash;
       optional<abi_def>      abi;
    };
 
@@ -191,7 +191,7 @@ public:
 
    struct get_code_hash_results {
       name                   account_name;
-      fc::sha256             code_hash;
+      chain::hash256         code_hash;
    };
 
    struct get_code_hash_params {
@@ -219,13 +219,13 @@ public:
 
    struct get_raw_abi_params {
       name                   account_name;
-      optional<fc::sha256>   abi_hash;
+      optional<chain::hash256>   abi_hash;
    };
 
    struct get_raw_abi_results {
       name                   account_name;
-      fc::sha256             code_hash;
-      fc::sha256             abi_hash;
+      chain::hash256         code_hash;
+      chain::hash256         abi_hash;
       optional<chain::blob>  abi;
    };
 

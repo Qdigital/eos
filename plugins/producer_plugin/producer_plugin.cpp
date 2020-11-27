@@ -675,7 +675,7 @@ void producer_plugin::set_program_options(
    boost::program_options::options_description& command_line_options,
    boost::program_options::options_description& config_file_options)
 {
-   auto default_priv_key = private_key_type::regenerate<fc::ecc::private_key_shim>(fc::sha256::hash(std::string("nathan")));
+   auto default_priv_key = private_key_type::regenerate<fc::ecc::private_key_shim>(hash256::hash(std::string("nathan")));
    auto private_key_default = std::make_pair(default_priv_key.get_public_key(), default_priv_key );
 
    boost::program_options::options_description producer_options;
@@ -743,7 +743,7 @@ bool producer_plugin::is_producer_key(const chain::public_key_type& key) const
   return false;
 }
 
-chain::signature_type producer_plugin::sign_compact(const chain::public_key_type& key, const fc::sha256& digest) const
+chain::signature_type producer_plugin::sign_compact(const chain::public_key_type& key, const chain::hash256& digest) const
 {
   if(key != chain::public_key_type()) {
     auto private_key_itr = my->_signature_providers.find(key);

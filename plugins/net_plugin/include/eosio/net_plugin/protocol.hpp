@@ -27,10 +27,10 @@ namespace eosio {
    struct handshake_message {
       uint16_t                   network_version = 0; ///< incremental value above a computed base
       chain_id_type              chain_id; ///< used to identify chain
-      fc::sha256                 node_id; ///< used to identify peers and prevent self-connect
+      hash256                    node_id; ///< used to identify peers and prevent self-connect
       chain::public_key_type     key; ///< authentication key; may be a producer or peer key, or empty
       tstamp                     time{0};
-      fc::sha256                 token; ///< digest of time to prove we own the private key of the key above
+      hash256                    token; ///< digest of time to prove we own the private key of the key above
       chain::signature_type      sig; ///< signature for the digest
       string                     p2p_address;
       uint32_t                   last_irreversible_block_num = 0;
@@ -79,7 +79,7 @@ namespace eosio {
   struct go_away_message {
     go_away_message(go_away_reason r = no_reason) : reason(r), node_id() {}
     go_away_reason reason{no_reason};
-    fc::sha256 node_id; ///< for duplicate notification
+    hash256 node_id; ///< for duplicate notification
   };
 
   struct time_message {
@@ -147,7 +147,7 @@ namespace eosio {
 
 } // namespace eosio
 
-FC_REFLECT( eosio::select_ids<fc::sha256>, (mode)(pending)(ids) )
+FC_REFLECT( eosio::select_ids<eosio::chain::hash256>, (mode)(pending)(ids) )
 FC_REFLECT( eosio::chain_size_message,
             (last_irreversible_block_num)(last_irreversible_block_id)
             (head_num)(head_id))

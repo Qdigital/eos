@@ -2603,9 +2603,9 @@ int main( int argc, char** argv ) {
          const std::vector<char> wasm_v = result["wasm"].as_blob().data;
          const std::vector<char> abi_v = result["abi"].as_blob().data;
 
-         fc::sha256 hash;
+         chain::hash256 hash;
          if(wasm_v.size())
-            hash = fc::sha256::hash(wasm_v.data(), wasm_v.size());
+            hash = chain::hash256::hash(wasm_v.data(), wasm_v.size());
          code_hash = (string)hash;
 
          wasm = string(wasm_v.begin(), wasm_v.end());
@@ -2958,11 +2958,11 @@ int main( int argc, char** argv ) {
 
       std::vector<char> old_wasm;
       bool duplicate = false;
-      fc::sha256 old_hash, new_hash;
+      chain::hash256 old_hash, new_hash;
       if (!suppress_duplicate_check) {
          try {
             const auto result = call(get_code_hash_func, fc::mutable_variant_object("account_name", account));
-            old_hash = fc::sha256(result["code_hash"].as_string());
+            old_hash = chain::hash256(result["code_hash"].as_string());
          } catch (...) {
             std::cerr << "Failed to get existing code hash, continue without duplicate check..." << std::endl;
             suppress_duplicate_check = true;
@@ -2994,7 +2994,7 @@ int main( int argc, char** argv ) {
 
       if (!suppress_duplicate_check) {
          if (code_bytes.size()) {
-            new_hash = fc::sha256::hash(&(code_bytes[0]), code_bytes.size());
+            new_hash = chain::hash256::hash(&(code_bytes[0]), code_bytes.size());
          }
          duplicate = (old_hash == new_hash);
       }

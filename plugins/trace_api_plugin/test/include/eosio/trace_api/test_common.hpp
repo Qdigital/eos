@@ -19,8 +19,8 @@ namespace eosio::trace_api {
     */
 
    namespace test_common {
-      fc::sha256 operator"" _h(const char* input, std::size_t) {
-         return fc::sha256(input);
+      chain::hash256 operator"" _h(const char* input, std::size_t) {
+         return chain::hash256(input);
       }
 
       chain::name operator"" _n(const char* input, std::size_t) {
@@ -32,7 +32,7 @@ namespace eosio::trace_api {
       }
 
       auto get_private_key( chain::name keyname, std::string role = "owner" ) {
-         auto secret = fc::sha256::hash( keyname.to_string() + role );
+         auto secret = chain::hash256::hash( keyname.to_string() + role );
          return chain::private_key_type::regenerate<fc::ecc::private_key_shim>( secret );
       }
 

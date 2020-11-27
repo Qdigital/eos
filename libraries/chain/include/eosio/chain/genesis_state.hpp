@@ -3,8 +3,6 @@
 #include <eosio/chain/chain_config.hpp>
 #include <eosio/chain/types.hpp>
 
-#include <fc/crypto/sha256.hpp>
-
 #include <string>
 #include <vector>
 

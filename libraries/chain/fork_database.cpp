@@ -48,7 +48,7 @@ namespace eosio { namespace chain {
                std::greater<bool>,
                std::greater<uint32_t>,
                std::greater<uint32_t>,
-               sha256_less
+               hash256_less
             >
          >
       >

@@ -42,7 +42,8 @@ namespace eosio {
    using fc::time_point;
    using fc::time_point_sec;
    using eosio::chain::transaction_id_type;
-   using eosio::chain::sha256_less;
+   using eosio::chain::hash256;
+   using eosio::chain::hash256_less;
 
    class connection;
 
@@ -78,7 +79,7 @@ namespace eosio {
                member<node_transaction_state, transaction_id_type, &node_transaction_state::id>,
                member<node_transaction_state, uint32_t, &node_transaction_state::connection_id>
             >,
-            composite_key_compare< sha256_less, std::less<uint32_t> >
+            composite_key_compare< hash256_less, std::less<uint32_t> >
          >,
          ordered_non_unique<
             tag< by_expiry >,
@@ -107,14 +108,14 @@ namespace eosio {
                      member<peer_block_state, uint32_t, &eosio::peer_block_state::connection_id>,
                      member<peer_block_state, block_id_type, &eosio::peer_block_state::id>
                >,
-               composite_key_compare< std::less<uint32_t>, sha256_less >
+               composite_key_compare< std::less<uint32_t>, hash256_less >
          >,
          ordered_non_unique< tag<by_block_id>,
                composite_key< peer_block_state,
                      member<peer_block_state, block_id_type, &eosio::peer_block_state::id>,
                      member<peer_block_state, bool, &eosio::peer_block_state::have_block>
                >,
-               composite_key_compare< sha256_less, std::greater<bool> >
+               composite_key_compare< hash256_less, std::greater<bool> >
          >,
          ordered_non_unique< tag<by_block_num>, member<eosio::peer_block_state, uint32_t, &eosio::peer_block_state::block_num > >
       >
@@ -243,7 +244,7 @@ namespace eosio {
       const std::chrono::system_clock::duration peer_authentication_interval{std::chrono::seconds{1}};
 
       chain_id_type                         chain_id;
-      fc::sha256                            node_id;
+      hash256                               node_id;
       string                                user_agent_name;
 
       chain_plugin*                         chain_plug = nullptr;
@@ -328,7 +329,7 @@ namespace eosio {
        *
        * If there are no configured private keys, returns an empty signature.
        */
-      chain::signature_type sign_compact(const chain::public_key_type& signer, const fc::sha256& digest) const;
+      chain::signature_type sign_compact(const chain::public_key_type& signer, const hash256& digest) const;
 
       constexpr uint16_t to_protocol_version(uint16_t v);
 
@@ -590,7 +591,7 @@ namespace eosio {
       block_id_type               fork_head;
       uint32_t                    fork_head_num{0};
       fc::time_point              last_close;
-      fc::sha256                  conn_node_id;
+      hash256                     conn_node_id;
       string                      remote_endpoint_ip;
       string                      remote_endpoint_port;
       string                      local_endpoint_ip;
@@ -932,7 +933,7 @@ namespace eosio {
          self->last_handshake_recv = handshake_message();
          self->last_handshake_sent = handshake_message();
          self->last_close = fc::time_point::now();
-         self->conn_node_id = fc::sha256();
+         self->conn_node_id = hash256();
       }
       if( has_last_req && !shutdown ) {
          my_impl->dispatcher->retry_fetch( self->shared_from_this() );
@@ -2530,7 +2531,7 @@ namespace eosio {
          fc_wlog( logger, "Handshake message validation: agent field to large: ${p}", ("p", msg.agent.substr(0, max_handshake_str_length) + "...") );
          valid = false;
       }
-      if ((msg.sig != chain::signature_type() || msg.token != sha256()) && (msg.token != fc::sha256::hash(msg.time))) {
+      if ((msg.sig != chain::signature_type() || msg.token != hash256()) && (msg.token != hash256::hash(msg.time))) {
          fc_wlog( logger, "Handshake message validation: token field invalid" );
          valid = false;
       }
@@ -2565,7 +2566,7 @@ namespace eosio {
          }
 
          std::unique_lock<std::mutex> g_conn( conn_mtx );
-         if( peer_address().empty() || last_handshake_recv.node_id == fc::sha256()) {
+         if( peer_address().empty() || last_handshake_recv.node_id == hash256()) {
             g_conn.unlock();
             fc_dlog(logger, "checking for duplicate" );
             std::shared_lock<std::shared_mutex> g_cnts( my_impl->connections_mtx );
@@ -3170,8 +3171,8 @@ namespace eosio {
          return false;
       }
 
-      if(msg.sig != chain::signature_type() && msg.token != sha256()) {
-         sha256 hash = fc::sha256::hash(msg.time);
+      if(msg.sig != chain::signature_type() && msg.token != hash256()) {
+         hash256 hash = hash256::hash(msg.time);
          if(hash != msg.token) {
             fc_elog( logger, "Peer ${peer} sent a handshake with an invalid token.", ("peer", msg.p2p_address) );
             return false;
@@ -3205,7 +3206,7 @@ namespace eosio {
       return chain::public_key_type();
    }
 
-   chain::signature_type net_plugin_impl::sign_compact(const chain::public_key_type& signer, const fc::sha256& digest) const
+   chain::signature_type net_plugin_impl::sign_compact(const chain::public_key_type& signer, const hash256& digest) const
    {
       auto private_key_itr = private_keys.find(signer);
       if(private_key_itr != private_keys.end())
@@ -3235,11 +3236,11 @@ namespace eosio {
       hello.node_id = my_impl->node_id;
       hello.key = my_impl->get_authentication_key();
       hello.time = sc::duration_cast<sc::nanoseconds>(sc::system_clock::now().time_since_epoch()).count();
-      hello.token = fc::sha256::hash(hello.time);
+      hello.token = hash256::hash(hello.time);
       hello.sig = my_impl->sign_compact(hello.key, hello.token);
       // If we couldn't sign, don't send a token.
       if(hello.sig == chain::signature_type())
-         hello.token = sha256();
+         hello.token = hash256();
       hello.p2p_address = my_impl->p2p_address;
       if( is_transactions_only_connection() ) hello.p2p_address += ":trx";
       if( is_blocks_only_connection() ) hello.p2p_address += ":blk";

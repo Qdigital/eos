@@ -144,9 +144,9 @@ struct txn_test_gen_plugin_impl {
          abi_serializer eosio_token_serializer{fc::json::from_string(contracts::eosio_token_abi().data()).as<abi_def>(),
                                                abi_serializer::create_yield_function( abi_serializer_max_time )};
 
-         fc::crypto::private_key txn_test_receiver_A_priv_key = fc::crypto::private_key::regenerate(fc::sha256(std::string(64, 'a')));
-         fc::crypto::private_key txn_test_receiver_B_priv_key = fc::crypto::private_key::regenerate(fc::sha256(std::string(64, 'b')));
-         fc::crypto::private_key txn_test_receiver_C_priv_key = fc::crypto::private_key::regenerate(fc::sha256(std::string(64, 'c')));
+         fc::crypto::private_key txn_test_receiver_A_priv_key = fc::crypto::private_key::regenerate(chain::hash256(std::string(64, 'a')));
+         fc::crypto::private_key txn_test_receiver_B_priv_key = fc::crypto::private_key::regenerate(chain::hash256(std::string(64, 'b')));
+         fc::crypto::private_key txn_test_receiver_C_priv_key = fc::crypto::private_key::regenerate(chain::hash256(std::string(64, 'c')));
          fc::crypto::public_key  txn_text_receiver_A_pub_key = txn_test_receiver_A_priv_key.get_public_key();
          fc::crypto::public_key  txn_text_receiver_B_pub_key = txn_test_receiver_B_priv_key.get_public_key();
          fc::crypto::public_key  txn_text_receiver_C_pub_key = txn_test_receiver_C_priv_key.get_public_key();
@@ -338,8 +338,8 @@ struct txn_test_gen_plugin_impl {
          controller& cc = app().get_plugin<chain_plugin>().chain();
          auto chainid = app().get_plugin<chain_plugin>().get_chain_id();
 
-         static fc::crypto::private_key a_priv_key = fc::crypto::private_key::regenerate(fc::sha256(std::string(64, 'a')));
-         static fc::crypto::private_key b_priv_key = fc::crypto::private_key::regenerate(fc::sha256(std::string(64, 'b')));
+         static fc::crypto::private_key a_priv_key = fc::crypto::private_key::regenerate(chain::hash256(std::string(64, 'a')));
+         static fc::crypto::private_key b_priv_key = fc::crypto::private_key::regenerate(chain::hash256(std::string(64, 'b')));
 
          static uint64_t nonce = static_cast<uint64_t>(fc::time_point::now().sec_since_epoch()) << 32;
 

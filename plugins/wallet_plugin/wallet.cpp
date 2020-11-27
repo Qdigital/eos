@@ -36,7 +36,7 @@ private_key_type derive_private_key( const std::string& prefix_string,
 {
    std::string sequence_string = std::to_string(sequence_number);
    fc::sha512 h = fc::sha512::hash(prefix_string + " " + sequence_string);
-   return private_key_type::regenerate<fc::ecc::private_key_shim>(fc::sha256::hash(h));
+   return private_key_type::regenerate<fc::ecc::private_key_shim>(chain::hash256::hash(h));
 }
 
 class soft_wallet_impl
@@ -404,7 +404,7 @@ fc::optional<signature_type> soft_wallet::try_sign_digest( const digest_type dig
 pair<public_key_type,private_key_type> soft_wallet::get_private_key_from_password( string account, string role, string password )const {
    auto seed = account + role + password;
    EOS_ASSERT( seed.size(), wallet_exception, "seed should not be empty" );
-   auto secret = fc::sha256::hash( seed.c_str(), seed.size() );
+   auto secret = chain::hash256::hash( seed.c_str(), seed.size() );
    auto priv = private_key_type::regenerate<fc::ecc::private_key_shim>( secret );
    return std::make_pair(  priv.get_public_key(), priv );
 }

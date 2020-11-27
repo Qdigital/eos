@@ -80,7 +80,7 @@ public:
       ) override;
 
    bool                   is_producer_key(const chain::public_key_type& key) const;
-   chain::signature_type  sign_compact(const chain::public_key_type& key, const fc::sha256& digest) const;
+   chain::signature_type  sign_compact(const chain::public_key_type& key, const chain::hash256& digest) const;
 
    virtual void plugin_initialize(const boost::program_options::variables_map& options);
    virtual void plugin_startup();

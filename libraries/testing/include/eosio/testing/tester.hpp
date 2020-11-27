@@ -95,7 +95,7 @@ namespace eosio { namespace testing {
          webauthn_private_key(webauthn_private_key&&) = default;
          webauthn_private_key(const webauthn_private_key&) = default;
 
-         static auto regenerate(const fc::sha256& secret) {
+         static auto regenerate(const chain::hash256& secret) {
             return webauthn_private_key(r1::private_key::regenerate(secret));
          }
 
@@ -103,7 +103,7 @@ namespace eosio { namespace testing {
             return public_key_type(webauthn::public_key(priv_key.get_public_key().serialize(), presence, _origin));
          }
 
-         signature sign( const sha256& digest, bool = true) const {
+         signature sign( const chain::hash256& digest, bool = true) const {
             auto json = std::string("{\"origin\":\"https://") +
                         _origin +
                         "\",\"type\":\"webauthn.get\",\"challenge\":\"" +
@@ -112,8 +112,8 @@ namespace eosio { namespace testing {
             std::vector<uint8_t> auth_data(37);
             memcpy(auth_data.data(), _origin_hash.data(), sizeof(_origin_hash));
 
-            auto client_data_hash = fc::sha256::hash(json);
-            fc::sha256::encoder e;
+            auto client_data_hash = chain::hash256::hash(json);
+            chain::hash256::encoder e;
             e.write((char*)auth_data.data(), auth_data.size());
             e.write(client_data_hash.data(), client_data_hash.data_size());
             auto sig = priv_key.sign_compact(e.result());
@@ -133,7 +133,7 @@ namespace eosio { namespace testing {
 
          r1::private_key priv_key;
          static const std::string _origin;
-         static const fc::sha256 _origin_hash;
+         static const chain::hash256 _origin_hash;
       };
    }
 
@@ -289,7 +289,7 @@ namespace eosio { namespace testing {
 
          template< typename KeyType = fc::ecc::private_key_shim >
          static auto get_private_key( name keyname, string role = "owner" ) {
-            auto secret = fc::sha256::hash(keyname.to_string() + role);
+            auto secret = chain::hash256::hash(keyname.to_string() + role);
             if constexpr (std::is_same_v<KeyType, mock::webauthn_private_key>) {
                return mock::webauthn_private_key::regenerate(secret);
             } else {

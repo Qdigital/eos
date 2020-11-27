@@ -455,7 +455,7 @@ struct controller_impl {
       genheader.active_schedule                = initial_schedule;
       genheader.pending_schedule.schedule      = initial_schedule;
       // NOTE: if wtmsig block signatures are enabled at genesis time this should be the hash of a producer authority schedule
-      genheader.pending_schedule.schedule_hash = fc::sha256::hash(initial_legacy_schedule);
+      genheader.pending_schedule.schedule_hash = hash256::hash(initial_legacy_schedule);
       genheader.header.timestamp               = genesis.initial_timestamp;
       genheader.header.action_mroot            = genesis.compute_chain_id();
       genheader.id                             = genheader.header.id();
@@ -987,8 +987,8 @@ struct controller_impl {
       );
    }
 
-   sha256 calculate_integrity_hash() const {
-      sha256::encoder enc;
+   hash256 calculate_integrity_hash() const {
+      hash256::encoder enc;
       auto hash_writer = std::make_shared<integrity_hash_snapshot_writer>(enc);
       add_to_snapshot(hash_writer);
       hash_writer->finalize();
@@ -2923,7 +2923,7 @@ block_id_type controller::get_block_id_for_num( uint32_t block_num )const { try 
    return id;
 } FC_CAPTURE_AND_RETHROW( (block_num) ) }
 
-sha256 controller::calculate_integrity_hash()const { try {
+hash256 controller::calculate_integrity_hash()const { try {
    return my->calculate_integrity_hash();
 } FC_LOG_AND_RETHROW() }
 

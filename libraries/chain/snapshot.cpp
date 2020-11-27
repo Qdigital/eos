@@ -346,7 +346,7 @@ void istream_snapshot_reader::return_to_header() {
    clear_section();
 }
 
-integrity_hash_snapshot_writer::integrity_hash_snapshot_writer(fc::sha256::encoder& enc)
+integrity_hash_snapshot_writer::integrity_hash_snapshot_writer(hash256::encoder& enc)
 :enc(enc)
 {
 }

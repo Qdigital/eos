@@ -242,9 +242,9 @@ namespace eosio { namespace chain {
 
    class account_object;
 
-   using block_id_type       = fc::sha256;
-   using checksum_type       = fc::sha256;
-   using checksum256_type    = fc::sha256;
+   using block_id_type       = hash256;
+   using checksum_type       = hash256;
+   using checksum256_type    = hash256;
    using checksum512_type    = fc::sha512;
    using checksum160_type    = fc::ripemd160;
    using transaction_id_type = checksum_type;
@@ -256,8 +256,8 @@ namespace eosio { namespace chain {
    using uint128_t           = unsigned __int128;
    using bytes               = vector<char>;
 
-   struct sha256_less {
-      bool operator()( const fc::sha256& lhs, const fc::sha256& rhs ) const {
+   struct hash256_less {
+      bool operator()( const hash256& lhs, const hash256& rhs ) const {
        return
              std::tie(lhs._hash[0], lhs._hash[1], lhs._hash[2], lhs._hash[3]) <
              std::tie(rhs._hash[0], rhs._hash[1], rhs._hash[2], rhs._hash[3]);

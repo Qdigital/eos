@@ -131,12 +131,12 @@ void apply_eosio_setcode(apply_context& context) {
    EOS_ASSERT( act.vmtype == 0, invalid_contract_vm_type, "code should be 0" );
    EOS_ASSERT( act.vmversion == 0, invalid_contract_vm_version, "version should be 0" );
 
-   fc::sha256 code_hash; /// default is the all zeros hash
+   hash256 code_hash; /// default is the all zeros hash
 
    int64_t code_size = (int64_t)act.code.size();
 
    if( code_size > 0 ) {
-     code_hash = fc::sha256::hash( act.code.data(), (uint32_t)act.code.size() );
+     code_hash = hash256::hash( act.code.data(), (uint32_t)act.code.size() );
      wasm_interface::validate(context.control, act.code);
    }
 

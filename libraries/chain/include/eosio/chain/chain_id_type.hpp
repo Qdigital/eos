@@ -2,8 +2,6 @@
 
 #include <fc/crypto/sha256.hpp>
 
-struct hello;
-
 namespace eosio {
 
    class net_plugin_impl;
@@ -17,8 +15,10 @@ namespace eosio {
 
 namespace chain {
 
-   struct chain_id_type : public fc::sha256 {
-      using fc::sha256::sha256;
+   using hash256 = fc::sha256;
+
+   struct chain_id_type : public hash256 {
+      using hash256::hash256;
 
       template<typename T>
       inline friend T& operator<<( T& ds, const chain_id_type& cid ) {
