@@ -162,11 +162,13 @@ namespace eosio { namespace chain {
 namespace eosio { namespace chain {
 
    struct ontx_data {
+      fc::unsigned_int version;
       flat_set<account_name> bill_to_accounts;
       uint64_t cpu_usage;
       uint64_t net_usage;
+      int64_t ram_delta;
    };
 
 } }
 
-FC_REFLECT( eosio::chain::ontx_data, (bill_to_accounts)(cpu_usage)(net_usage) )
+FC_REFLECT( eosio::chain::ontx_data, (version)(bill_to_accounts)(cpu_usage)(net_usage)(ram_delta) )

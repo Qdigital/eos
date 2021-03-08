@@ -685,10 +685,18 @@ namespace eosio { namespace chain {
    }
 
    void transaction_context::apply_ontx() {
+      int64_t ram_delta = 0;
+      for( const auto& a : trace->action_traces ) {
+         for( const auto& d : a.account_ram_deltas ) {
+            ram_delta += d.delta;
+         }
+      }
       auto data = ontx_data {
+         .version = 0,
          .bill_to_accounts = bill_to_accounts,
          .cpu_usage = static_cast<uint64_t>(billed_cpu_time_us),
          .net_usage = net_usage,
+         .ram_delta = ram_delta,
       };
       auto act = action(
          vector<permission_level>{{config::system_account_name, config::active_name}},
