@@ -7,6 +7,7 @@
 #include <fc/interprocess/container.hpp>
 #include <fc/io/varint.hpp>
 #include <fc/io/enum_type.hpp>
+#include <fc/io/json.hpp>
 #include <fc/crypto/sha224.hpp>
 #include <fc/optional.hpp>
 #include <fc/safe.hpp>
@@ -393,6 +394,18 @@ namespace eosio { namespace chain {
    template<class... Ts> struct overloaded : Ts... { using Ts::operator()...; };
    template<class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
 
+   struct any {
+      fc::variant data;
+   };
+
 } }  // eosio::chain
 
+namespace fc {
+   inline void to_variant(const eosio::chain::any& var, fc::variant& vo) { vo = var.data; }
+   inline void from_variant(const fc::variant& var, eosio::chain::any& vo) {
+      vo.data = fc::json::from_string(var.get_string());
+   }
+}
+
 FC_REFLECT_EMPTY( eosio::chain::void_t )
+FC_REFLECT( eosio::chain::any, (data) )
