@@ -593,6 +593,10 @@ public:
 
    chain::symbol extract_core_symbol()const;
 
+   using extract_genesis_json_result = chain::genesis_state;
+   using extract_genesis_json_params = empty;
+   extract_genesis_json_result extract_genesis_json( const extract_genesis_json_params& )const;
+
    friend struct resolver_factory<read_only>;
 };
 
@@ -740,6 +744,7 @@ public:
    const controller& chain() const;
 
    chain::chain_id_type get_chain_id() const;
+   fc::optional<chain::genesis_state> get_genesis_state() const;
    fc::microseconds get_abi_serializer_max_time() const;
    bool api_accept_transactions() const;
    // set true by other plugins if any plugin allows transactions

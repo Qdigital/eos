@@ -1445,6 +1445,10 @@ chain::chain_id_type chain_plugin::get_chain_id()const {
    return my->chain->get_chain_id();
 }
 
+fc::optional<chain::genesis_state> chain_plugin::get_genesis_state() const {
+   return my->genesis ? my->genesis : block_log::extract_genesis_state( my->blocks_dir );
+}
+
 fc::microseconds chain_plugin::get_abi_serializer_max_time() const {
    return my->abi_serializer_max_time_us;
 }
@@ -2644,6 +2648,12 @@ chain::symbol read_only::extract_core_symbol()const {
    }
 
    return core_symbol;
+}
+
+read_only::extract_genesis_json_result read_only::extract_genesis_json(const read_only::extract_genesis_json_params&) const {
+   auto gs = app().get_plugin<chain_plugin>().get_genesis_state();
+   EOS_ASSERT( gs, block_log_exception, "Invalid configured genesis state" );
+   return *gs;
 }
 
 } // namespace chain_apis
