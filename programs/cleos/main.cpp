@@ -2441,16 +2441,33 @@ int main( int argc, char** argv ) {
    create->require_subcommand();
 
    bool r1 = false;
+   string create_key_type;
    string key_file;
    bool print_console = false;
    // create key
-   auto create_key = create->add_subcommand("key", localized("Create a new keypair and print the public and private keys"))->callback( [&r1, &key_file, &print_console](){
+   auto create_key = create->add_subcommand("key", localized("Create a new keypair and print the public and private keys"))->callback( [&r1, &key_file, &print_console, &create_key_type](){
       if (key_file.empty() && !print_console) {
          std::cerr << "ERROR: Either indicate a file using \"--file\" or pass \"--to-console\"" << std::endl;
          return;
       }
 
-      auto pk    = r1 ? private_key_type::generate_r1() : private_key_type::generate();
+      if (create_key_type.empty()) {
+         create_key_type = r1 ? "R1" : "K1";
+      } else if (r1 && create_key_type != "R1") {
+         std::cout << "Warning: \"--key-type\" overwrites \"--r1\" option" << std::endl;
+      }
+
+      private_key_type pk;
+      if (create_key_type == "K1") {
+         pk = private_key_type::generate();
+      } else if (create_key_type == "R1") {
+         pk = private_key_type::generate_r1();
+      } else if (create_key_type == "ED25519") {
+         pk = private_key_type::generate_ed25519();
+      } else {
+         std::cerr << "ERROR: Unsupported key type \"" << create_key_type << "\"" << std::endl;
+         return;
+      }
       auto privs = pk.to_string();
       auto pubs  = pk.get_public_key().to_string();
       if (print_console) {
@@ -2463,9 +2480,11 @@ int main( int argc, char** argv ) {
          out << localized("Public key: ${key}", ("key", pubs ) ) << std::endl;
       }
    });
-   create_key->add_flag( "--r1", r1, "Generate a key using the R1 curve (iPhone), instead of the K1 curve (Bitcoin)"  );
+   auto r1_opt = create_key->add_flag( "--r1", r1, "Generate a key using the R1 curve (iPhone), instead of the K1 curve (Bitcoin)"  );
    create_key->add_option("-f,--file", key_file, localized("Name of file to write private/public key output to. (Must be set, unless \"--to-console\" is passed"));
    create_key->add_flag( "--to-console", print_console, localized("Print private/public keys to console."));
+   create_key->add_option("--key-type", create_key_type, "Generate a key with the given type (K1, R1, ED25519)");
+   CLI::deprecate_option(r1_opt, "--key-type");
 
    // create account
    auto createAccount = create_account_subcommand( create, true /*simple*/ );
@@ -3268,7 +3287,7 @@ int main( int argc, char** argv ) {
    string wallet_create_key_type;
    auto createKeyInWallet = wallet->add_subcommand("create_key", localized("Create private key within wallet"));
    createKeyInWallet->add_option("-n,--name", wallet_name, localized("The name of the wallet to create key into"), true);
-   createKeyInWallet->add_option("key_type", wallet_create_key_type, localized("Key type to create (K1/R1)"), true)->type_name("K1/R1");
+   createKeyInWallet->add_option("key_type", wallet_create_key_type, localized("Key type to create (K1/R1/ED25519)"), true)->type_name("K1/R1/ED25519");
    createKeyInWallet->callback([&wallet_name, &wallet_create_key_type] {
       //an empty key type is allowed -- it will let the underlying wallet pick which type it prefers
       fc::variants vs = {fc::variant(wallet_name), fc::variant(wallet_create_key_type)};

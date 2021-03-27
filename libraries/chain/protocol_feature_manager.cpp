@@ -186,6 +186,17 @@ may use a new `set_proposed_producers_ex` intrinsic to access extended features.
 */
             {}
          } )
+         (  builtin_protocol_feature_t::ed25519_key, builtin_protocol_feature_spec{
+            "ED25519_KEY",
+            fc::variant("72a3be03d769683f4e3b5b017f2617174f3fc3d03c2fc7e42743a094ceee4714").as<digest_type>(),
+            // SHA256 hash of the raw message below within the comment delimiters (do not modify message below).
+/*
+Builtin protocol feature: ED25519_KEY
+
+Enables usage of ed25519 keys and signatures.
+*/
+            {}
+         } )
    ;
 
 
