@@ -2683,6 +2683,7 @@ int main( int argc, char** argv ) {
    uint32_t limit = 10;
    string index_position;
    bool reverse = false;
+   string keys;
    bool show_payer = false;
    auto getTable = get->add_subcommand( "table", localized("Retrieve the contents of a database table"));
    getTable->add_option( "account", code, localized("The account who owns the table") )->required();
@@ -2704,9 +2705,15 @@ int main( int argc, char** argv ) {
    getTable->add_flag("-b,--binary", binary, localized("Return the value as BINARY rather than using abi to interpret as JSON"));
    getTable->add_flag("-r,--reverse", reverse, localized("Iterate in reverse order"));
    getTable->add_flag("--show-payer", show_payer, localized("show RAM payer"));
+   getTable->add_option( "--keys", keys, localized("The array of primary keys") );
 
 
    getTable->callback([&] {
+      fc::variant keys_var;
+      if( !keys.empty() ) {
+         keys_var = json_from_file_or_string(keys, fc::json::parse_type::relaxed_parser);
+         EOSC_ASSERT( keys_var.is_array(), "ERROR: 'keys' should contain an array of keys" );
+      }
       auto result = call(get_table_func, fc::mutable_variant_object("json", !binary)
                          ("code",code)
                          ("scope",scope)
@@ -2720,6 +2727,7 @@ int main( int argc, char** argv ) {
                          ("encode_type", encode_type)
                          ("reverse", reverse)
                          ("show_payer", show_payer)
+                         ("keys", keys_var)
                          );
 
       std::cout << fc::json::to_pretty_string(result)

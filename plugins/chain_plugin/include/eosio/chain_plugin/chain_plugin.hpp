@@ -309,6 +309,7 @@ public:
       string      encode_type{"dec"}; //dec, hex , default=dec
       optional<bool>  reverse;
       optional<bool>  show_payer; // show RAM pyer
+      optional<vector<string>> keys;
     };
 
    struct get_table_rows_result {
@@ -429,6 +430,7 @@ public:
 
    template <typename IndexType, typename SecKeyType, typename ConvFn>
    read_only::get_table_rows_result get_table_rows_by_seckey( const read_only::get_table_rows_params& p, const abi_def& abi, ConvFn conv )const {
+      EOS_ASSERT(!p.keys, chain::plugin_exception, "'keys' param is not supported for secondary indices");
       read_only::get_table_rows_result result;
       const auto& d = db.db();
 
@@ -530,64 +532,115 @@ public:
       const auto* t_id = d.find<chain::table_id_object, chain::by_code_scope_table>(boost::make_tuple(p.code, name(scope), p.table));
       if( t_id != nullptr ) {
          const auto& idx = d.get_index<IndexType, chain::by_scope_primary>();
-         auto lower_bound_lookup_tuple = std::make_tuple( t_id->id, std::numeric_limits<uint64_t>::lowest() );
-         auto upper_bound_lookup_tuple = std::make_tuple( t_id->id, std::numeric_limits<uint64_t>::max() );
+         if( !p.keys ) {
+            auto lower_bound_lookup_tuple = std::make_tuple( t_id->id, std::numeric_limits<uint64_t>::lowest() );
+            auto upper_bound_lookup_tuple = std::make_tuple( t_id->id, std::numeric_limits<uint64_t>::max() );
 
-         if( p.lower_bound.size() ) {
-            if( p.key_type == "name" ) {
-               name s(p.lower_bound);
-               std::get<1>(lower_bound_lookup_tuple) = s.to_uint64_t();
-            } else {
-               auto lv = convert_to_type<typename IndexType::value_type::key_type>( p.lower_bound, "lower_bound" );
-               std::get<1>(lower_bound_lookup_tuple) = lv;
-            }
-         }
-
-         if( p.upper_bound.size() ) {
-            if( p.key_type == "name" ) {
-               name s(p.upper_bound);
-               std::get<1>(upper_bound_lookup_tuple) = s.to_uint64_t();
-            } else {
-               auto uv = convert_to_type<typename IndexType::value_type::key_type>( p.upper_bound, "upper_bound" );
-               std::get<1>(upper_bound_lookup_tuple) = uv;
-            }
-         }
-
-         if( upper_bound_lookup_tuple < lower_bound_lookup_tuple  )
-            return result;
-
-         auto walk_table_row_range = [&]( auto itr, auto end_itr ) {
-            auto cur_time = fc::time_point::now();
-            auto end_time = cur_time + fc::microseconds(1000 * 10); /// 10ms max time
-            vector<char> data;
-            for( unsigned int count = 0; cur_time <= end_time && count < p.limit && itr != end_itr; ++count, ++itr, cur_time = fc::time_point::now() ) {
-               copy_inline_row(*itr, data);
-
-               fc::variant data_var;
-               if( p.json ) {
-                  data_var = abis.binary_to_variant( abis.get_table_type(p.table), data, abi_serializer::create_yield_function( abi_serializer_max_time ), shorten_abi_errors );
+            if( p.lower_bound.size() ) {
+               if( p.key_type == "name" ) {
+                  name s(p.lower_bound);
+                  std::get<1>(lower_bound_lookup_tuple) = s.to_uint64_t();
                } else {
-                  data_var = fc::variant( data );
-               }
-
-               if( p.show_payer && *p.show_payer ) {
-                  result.rows.emplace_back( fc::mutable_variant_object("data", std::move(data_var))("payer", itr->payer) );
-               } else {
-                  result.rows.emplace_back( std::move(data_var) );
+                  auto lv = convert_to_type<typename IndexType::value_type::key_type>( p.lower_bound, "lower_bound" );
+                  std::get<1>(lower_bound_lookup_tuple) = lv;
                }
             }
-            if( itr != end_itr ) {
-               result.more = true;
-               result.next_key = convert_to_string(itr->primary_key, p.key_type, p.encode_type, "next_key - next lower bound");
-            }
-         };
 
-         auto lower = idx.lower_bound( lower_bound_lookup_tuple );
-         auto upper = idx.upper_bound( upper_bound_lookup_tuple );
-         if( p.reverse && *p.reverse ) {
-            walk_table_row_range( boost::make_reverse_iterator(upper), boost::make_reverse_iterator(lower) );
+            if( p.upper_bound.size() ) {
+               if( p.key_type == "name" ) {
+                  name s(p.upper_bound);
+                  std::get<1>(upper_bound_lookup_tuple) = s.to_uint64_t();
+               } else {
+                  auto uv = convert_to_type<typename IndexType::value_type::key_type>( p.upper_bound, "upper_bound" );
+                  std::get<1>(upper_bound_lookup_tuple) = uv;
+               }
+            }
+
+            if( upper_bound_lookup_tuple < lower_bound_lookup_tuple  )
+               return result;
+
+            auto walk_table_row_range = [&]( auto itr, auto end_itr ) {
+               auto cur_time = fc::time_point::now();
+               auto end_time = cur_time + fc::microseconds(1000 * 10); /// 10ms max time
+               vector<char> data;
+               for( unsigned int count = 0; cur_time <= end_time && count < p.limit && itr != end_itr; ++count, ++itr, cur_time = fc::time_point::now() ) {
+                  copy_inline_row(*itr, data);
+
+                  fc::variant data_var;
+                  if( p.json ) {
+                     data_var = abis.binary_to_variant( abis.get_table_type(p.table), data, abi_serializer::create_yield_function( abi_serializer_max_time ), shorten_abi_errors );
+                  } else {
+                     data_var = fc::variant( data );
+                  }
+
+                  if( p.show_payer && *p.show_payer ) {
+                     result.rows.emplace_back( fc::mutable_variant_object("data", std::move(data_var))("payer", itr->payer) );
+                  } else {
+                     result.rows.emplace_back( std::move(data_var) );
+                  }
+               }
+               if( itr != end_itr ) {
+                  result.more = true;
+                  result.next_key = convert_to_string(itr->primary_key, p.key_type, p.encode_type, "next_key - next lower bound");
+               }
+            };
+
+            auto lower = idx.lower_bound( lower_bound_lookup_tuple );
+            auto upper = idx.upper_bound( upper_bound_lookup_tuple );
+            if( p.reverse && *p.reverse ) {
+               walk_table_row_range( boost::make_reverse_iterator(upper), boost::make_reverse_iterator(lower) );
+            } else {
+               walk_table_row_range( lower, upper );
+            }
          } else {
-            walk_table_row_range( lower, upper );
+            EOS_ASSERT(p.lower_bound.empty() && p.upper_bound.empty(), chain::plugin_exception, "'keys' param can't be used wih 'lower_bound' or 'upper_bound'");
+
+            auto walk_table_row_by_keys = [&]( auto itr, auto end_itr ) {
+               auto comp_key = std::make_tuple( t_id->id, std::numeric_limits<uint64_t>::lowest() );
+               auto cur_time = fc::time_point::now();
+               auto end_time = cur_time + fc::microseconds(1000 * 10); /// 10ms max time
+               vector<char> data;
+               for( unsigned int count = 0; cur_time <= end_time && count < p.limit && itr != end_itr; ++count, ++itr, cur_time = fc::time_point::now() ) {
+                  if( p.key_type == "name" ) {
+                     name s(*itr);
+                     std::get<1>(comp_key) = s.to_uint64_t();
+                  } else {
+                     auto kv = convert_to_type<typename IndexType::value_type::key_type>( *itr, "keys" );
+                     std::get<1>(comp_key) = kv;
+                  }
+                  auto it = idx.find(comp_key);
+                  if( it != idx.end() ) {
+                     copy_inline_row(*it, data);
+
+                     fc::variant data_var;
+                     if( p.json ) {
+                        data_var = abis.binary_to_variant( abis.get_table_type(p.table), data, abi_serializer::create_yield_function( abi_serializer_max_time ), shorten_abi_errors );
+                     } else {
+                        data_var = fc::variant( data );
+                     }
+
+                     if( p.show_payer && *p.show_payer ) {
+                        result.rows.emplace_back( fc::mutable_variant_object("data", std::move(data_var))("payer", it->payer) );
+                     } else {
+                        result.rows.emplace_back( std::move(data_var) );
+                     }
+                  } else {
+                     result.rows.emplace_back( fc::variant() );
+                  }
+               }
+               if( itr != end_itr ) {
+                  result.more = true;
+                  result.next_key = *itr;
+               }
+            };
+
+            auto itr = p.keys->begin();
+            auto end_itr = p.keys->end();
+            if( p.reverse && *p.reverse ) {
+               walk_table_row_by_keys( boost::make_reverse_iterator(end_itr), boost::make_reverse_iterator(itr) );
+            } else {
+               walk_table_row_by_keys( itr, end_itr );
+            }
          }
       }
       return result;
@@ -781,7 +834,7 @@ FC_REFLECT(eosio::chain_apis::read_only::get_block_header_state_params, (block_n
 
 FC_REFLECT( eosio::chain_apis::read_write::push_transaction_results, (transaction_id)(processed) )
 
-FC_REFLECT( eosio::chain_apis::read_only::get_table_rows_params, (json)(code)(scope)(table)(table_key)(lower_bound)(upper_bound)(limit)(key_type)(index_position)(encode_type)(reverse)(show_payer) )
+FC_REFLECT( eosio::chain_apis::read_only::get_table_rows_params, (json)(code)(scope)(table)(table_key)(lower_bound)(upper_bound)(limit)(key_type)(index_position)(encode_type)(reverse)(show_payer)(keys) )
 FC_REFLECT( eosio::chain_apis::read_only::get_table_rows_result, (rows)(more)(next_key) );
 
 FC_REFLECT( eosio::chain_apis::read_only::get_table_by_scope_params, (code)(table)(lower_bound)(upper_bound)(limit)(reverse) )
